@@ -1,0 +1,7 @@
+/.ipynb_checkpoints/
+/venv
+/dicom_files
+/pngs
+/.idea
+*.zip
+*.csv
