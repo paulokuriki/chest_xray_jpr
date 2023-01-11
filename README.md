@@ -17,11 +17,11 @@
 -l LIMIT              [Optional] Limit of files processed. Used only for testing
                         purpose.
 
-E.g.: python -f dicom_folder -i DASA -l 100
+E.g.: python process.py -f dicom_folder -i DASA -l 100
       Process only 100 cases for testing purpose
       
       
-E.g.: python -f dicom_folder -i DASA 
+E.g.: python process.py -f dicom_folder -i DASA 
       To process all DICOM files, supress the -l parameter
       
       
