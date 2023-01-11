@@ -1,15 +1,19 @@
 import pydicom
 from tqdm import tqdm
 import pandas as pd
+from pandas import DataFrame
 import os
 import time
+from time import sleep
 import glob
 import numpy as np
 from pydicom import _dicom_dict as dc
 from constants import *
 import string
+import tempfile as tmp
 
-def dcmtag2df(folder: str, list_of_tags: list):
+
+def dcmtag2df(folder: str, list_of_tags: list) -> DataFrame:
     """
     # Create a Pandas DataFrame with the <list_of_tags> DICOM tags
     # from the DICOM files in <folder>
@@ -41,9 +45,9 @@ def dcmtag2df(folder: str, list_of_tags: list):
     except Exception as e:
         print(e)
         return None
-    time.time()
-    print("Reading files...")
 
+    print("Reading DICOM files...")
+    sleep(0.5)
     for _f in tqdm(filelist):
         try:
             stop_before_pixels = not 'PixelData' in list_of_tags
@@ -139,8 +143,8 @@ def dcmtag2df(folder: str, list_of_tags: list):
         dictone[_tag] = test[i]
 
     df = pd.DataFrame(dictone)
-    time.sleep(2)
     print("Finished.")
+
     return df
 
 
@@ -237,3 +241,18 @@ def search_words_in_serie(series_description: str, search_words: list, exclusion
     found = search_flag and exclusion_flag is False
 
     return found
+
+
+def save_csv(df, export_csv: str):
+    try:
+        if len(df.index) > 0:
+            df.to_csv(export_csv, index=False)
+            print(f'{export_csv} exported successfully.')
+        else:
+            print(f'{export_csv} not modified.')
+    except PermissionError:
+        new_filename = next(tmp._get_candidate_names()) + ".csv"
+        df.to_csv(new_filename, index=False)
+        print(f'{export_csv} was locked. New file exported to the filename {new_filename} successfully.')
+    except Exception as e:
+        print(f'Error exporting {export_csv} file.\n' + str(e))
