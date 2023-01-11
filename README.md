@@ -18,7 +18,7 @@
                         purpose.
 
 E.g.: python -f dicom_folder -i DASA -l 100
-      Process only 10 cases for testing purpose
+      Process only 100 cases for testing purpose
       
       
 E.g.: python -f dicom_folder -i DASA 
