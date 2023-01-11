@@ -1,7 +1,7 @@
 # SPR Chest X-Ray Challenge. 
 ## Dataset Provider Module
 
-### Usage: process.py [-h] -f DICOM_FOLDER -i INSTITUTION [-l LIMIT]
+### Usage: python process.py [-h] -f DICOM_FOLDER -i INSTITUTION [-l LIMIT]
 
 ### Options:
 
@@ -14,7 +14,7 @@
 -i INSTITUTION        Institution Sufix. Eg. DASA, UNIFESP, HC-USP, HIAE,
                         SIRIO, FLEURY
 
--l LIMIT              Limit of files processed. Used only for testing
+-l LIMIT              [Optional] Limit of files processed. Used only for testing
                         purpose.
 
 E.g.: python -f dicom_folder -i DASA -l 100
@@ -25,6 +25,6 @@ E.g.: python -f dicom_folder -i DASA
       To process all DICOM files, supress the -l parameter
       
       
-The following files should be submitted to SPR bucket:
+At the end of the process, the following files should be submitted to SPR bucket:
 - anon_exams.csv
 - anon_images.zio
