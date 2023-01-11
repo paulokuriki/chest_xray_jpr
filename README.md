@@ -18,11 +18,13 @@
                         purpose.
 
 E.g.: python process.py -f dicom_folder -i DASA -l 100
-      Process only 100 cases for testing purpose
+      
+Process only 100 cases for testing purpose
       
       
 E.g.: python process.py -f dicom_folder -i DASA 
-      To process all DICOM files, supress the -l parameter
+      
+To process all DICOM files, supress the -l parameter
       
       
 At the end of the process, the following files should be submitted to SPR bucket:
