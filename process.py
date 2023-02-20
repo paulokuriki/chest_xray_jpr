@@ -19,6 +19,8 @@ institution_prefix = args.institution
 dicom_folder = args.dicom_folder
 if args.limit:
     limit_lines = int(args.limit)
+else:
+    limit_lines = 0
 
 read_dicom_tags(dicom_folder, institution_prefix)
 
