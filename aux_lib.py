@@ -48,7 +48,7 @@ def dcmtag2df(folder: str, list_of_tags: list) -> DataFrame:
 
     args = zip(filelist, [list_of_tags] * len(filelist))
 
-    pool = Pool(os.cpu_count() - 1)
+    pool = Pool()  # os.cpu_count() - 1)
 
     print("Reading DICOM files. Multiprocessing using: ", pool._processes, "cores")
     sleep(0.5)
