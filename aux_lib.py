@@ -1,3 +1,4 @@
+from multiprocessing import Pool
 import pydicom
 from tqdm import tqdm
 import pandas as pd
@@ -27,7 +28,6 @@ def dcmtag2df(folder: str, list_of_tags: list) -> DataFrame:
     #    df (DataFrame): table of DICOM tags from the files in folder.
     """
     list_of_tags = list_of_tags.copy()
-    table = []
     start = time.time()
 
     # checks if folder exists
@@ -46,92 +46,18 @@ def dcmtag2df(folder: str, list_of_tags: list) -> DataFrame:
         print(e)
         return None
 
-    print("Reading DICOM files...")
+    args = zip(filelist, [list_of_tags] * len(filelist))
+
+    pool = Pool(os.cpu_count() - 1)
+
+    print("Reading DICOM files. Multiprocessing using: ", pool._processes, "cores")
     sleep(0.5)
-    for _f in tqdm(filelist):
-        try:
-            stop_before_pixels = not 'PixelData' in list_of_tags
-            dataset = pydicom.dcmread(_f, stop_before_pixels=stop_before_pixels)
-            items = []
 
-            items.append(_f)
-
-            for _tag in list_of_tags:
-                if _tag in dataset:
-                    if dataset.data_element(_tag) is not None:
-                        if _tag == 'PixelData':
-                            items.append(len(dataset.data_element(_tag).value))
-                        else:
-                            items.append(str(dataset.data_element(_tag).value))
-                    else:
-                        if dataset[tag_number] is not None:
-                            items.append(str(dataset[tag_number].value))
-                        else:
-                            items.append("NaN")
-                else:
-                    series_description = dataset.get('SeriesDescription')
-                    if _tag == 'IOP_Plane':
-                        IOP = dataset.get('ImageOrientationPatient')
-                        _plano = IOP_Plane(IOP)
-                        items.append(_plano)
-                    elif _tag == "Primary":
-                        try:
-                            image_type = ' '.join(dataset.get('ImageType'))
-                        except:
-                            image_type = ''
-                        found_word = search_words_in_serie(image_type, PRIMARY)
-                        items.append(found_word)
-                    elif _tag == "Gad":
-                        found_word = search_words_in_serie(series_description, GAD, GAD_EXCLUSION)
-                        items.append(found_word)
-                    elif _tag == "T1":
-                        found_word = search_words_in_serie(series_description, T1, FLAIR + T2)
-                        items.append(found_word)
-                    elif _tag == "T2":
-                        found_word = search_words_in_serie(series_description, T2)
-                        items.append(found_word)
-                    elif _tag == "FLAIR":
-                        found_word = search_words_in_serie(series_description, FLAIR, T1)
-                        items.append(found_word)
-                    elif _tag == "SWI":
-                        found_word = search_words_in_serie(series_description, SWI)
-                        items.append(found_word)
-                    elif _tag == "FIESTA":
-                        found_word = search_words_in_serie(series_description, FIESTA)
-                        items.append(found_word)
-                    elif _tag == "TOF":
-                        found_word = search_words_in_serie(series_description, TOF)
-                        items.append(found_word)
-                    elif _tag == "DWI":
-                        found_word = search_words_in_serie(series_description, DWI, DWI_EXCLUSION)
-                        items.append(found_word)
-                    elif _tag == "Angio":
-                        found_word = search_words_in_serie(series_description, ANGIO)
-                        items.append(found_word)
-                    elif _tag == "MPR":
-                        found_word = search_words_in_serie(series_description, MPR)
-                        items.append(found_word)
-                    elif _tag == "Others":
-                        found_word = search_words_in_serie(series_description, OTHERS)
-                        items.append(found_word)
-                    else:
-                        # checks if a tag number was informed
-                        tag_number = tag_number_to_base_16(_tag)
-                        if tag_number in dataset:
-                            if dataset[tag_number] is not None:
-                                items.append(str(dataset[tag_number].value))
-                            else:
-                                items.append("NaN")
-                        else:
-                            items.append("NaN")
-
-            table.append((items))
-        except (FileNotFoundError, PermissionError):
-            pass
-        except Exception as e:
-            pass
+    table = pool.starmap(read_dicom, args)
+    table = [item for item in table if item != []]
 
     list_of_tags.insert(0, "Filename")
+
     test = list(map(list, zip(*table)))
     dictone = {}
 
@@ -143,9 +69,93 @@ def dcmtag2df(folder: str, list_of_tags: list) -> DataFrame:
         dictone[_tag] = test[i]
 
     df = pd.DataFrame(dictone)
-    print("Finished.")
+
+    print("Finished.", time.time() - start, 'secs')
 
     return df
+
+
+def read_dicom(_f, list_of_tags):
+    items = []
+
+    try:
+        stop_before_pixels = not 'PixelData' in list_of_tags
+        dataset = pydicom.dcmread(_f, stop_before_pixels=stop_before_pixels)
+
+        items.append(_f)
+
+        for _tag in list_of_tags:
+            if _tag in dataset:
+                if dataset.data_element(_tag) is not None:
+                    if _tag == 'PixelData':
+                        items.append(len(dataset.data_element(_tag).value))
+                    else:
+                        items.append(str(dataset.data_element(_tag).value))
+                else:
+                    if dataset[tag_number] is not None:
+                        items.append(str(dataset[tag_number].value))
+                    else:
+                        items.append("NaN")
+            else:
+                series_description = dataset.get('SeriesDescription')
+                if _tag == 'IOP_Plane':
+                    IOP = dataset.get('ImageOrientationPatient')
+                    _plano = IOP_Plane(IOP)
+                    items.append(_plano)
+                elif _tag == "Primary":
+                    try:
+                        image_type = ' '.join(dataset.get('ImageType'))
+                    except:
+                        image_type = ''
+                    found_word = search_words_in_serie(image_type, PRIMARY)
+                    items.append(found_word)
+                elif _tag == "Gad":
+                    found_word = search_words_in_serie(series_description, GAD, GAD_EXCLUSION)
+                    items.append(found_word)
+                elif _tag == "T1":
+                    found_word = search_words_in_serie(series_description, T1, FLAIR + T2)
+                    items.append(found_word)
+                elif _tag == "T2":
+                    found_word = search_words_in_serie(series_description, T2)
+                    items.append(found_word)
+                elif _tag == "FLAIR":
+                    found_word = search_words_in_serie(series_description, FLAIR, T1)
+                    items.append(found_word)
+                elif _tag == "SWI":
+                    found_word = search_words_in_serie(series_description, SWI)
+                    items.append(found_word)
+                elif _tag == "FIESTA":
+                    found_word = search_words_in_serie(series_description, FIESTA)
+                    items.append(found_word)
+                elif _tag == "TOF":
+                    found_word = search_words_in_serie(series_description, TOF)
+                    items.append(found_word)
+                elif _tag == "DWI":
+                    found_word = search_words_in_serie(series_description, DWI, DWI_EXCLUSION)
+                    items.append(found_word)
+                elif _tag == "Angio":
+                    found_word = search_words_in_serie(series_description, ANGIO)
+                    items.append(found_word)
+                elif _tag == "MPR":
+                    found_word = search_words_in_serie(series_description, MPR)
+                    items.append(found_word)
+                elif _tag == "Others":
+                    found_word = search_words_in_serie(series_description, OTHERS)
+                    items.append(found_word)
+                else:
+                    # checks if a tag number was informed
+                    tag_number = tag_number_to_base_16(_tag)
+                    if tag_number in dataset:
+                        if dataset[tag_number] is not None:
+                            items.append(str(dataset[tag_number].value))
+                        else:
+                            items.append("NaN")
+                    else:
+                        items.append("NaN")
+
+        return (items)
+    except:
+        return ([])
 
 
 def IOP_Plane(IOP: list) -> str:
