@@ -2,6 +2,7 @@ from aux_lib import dcmtag2df, save_csv
 from constants import *
 from datetime import datetime
 from dateutil import relativedelta
+import numpy as np
 
 import random
 random.seed(datetime.now().timestamp())
@@ -19,15 +20,24 @@ def read_dicom_tags(dicom_folder: str, institution_prefix: str, export_csv = "di
 
     # calculates age
     def calculate_age(birth_date: str, exam_datetime: str) -> int:
-        date_pattern = "%Y%m%d"
-        start_date = datetime.strptime(birth_date, date_pattern)
+        try:
+            if birth_date is not np.nan and birth_date not in ['', 'NaN'] and  exam_datetime is not np.nan and exam_datetime not in ['', 'NaN']:
+                date_pattern = "%Y%m%d"
+                start_date = datetime.strptime(birth_date, date_pattern)
 
-        date_pattern = "%Y%m%d"
-        end_date = datetime.strptime(exam_datetime, date_pattern)
+                date_pattern = "%Y%m%d"
+                end_date = datetime.strptime(exam_datetime, date_pattern)
 
-        # Get the relativedelta between two dates
-        delta = relativedelta.relativedelta(end_date, start_date)
-        return delta.years
+                # Get the relativedelta between two dates
+                delta = relativedelta.relativedelta(end_date, start_date)
+
+                return delta.years
+            else:
+                return np.nan
+        except Exception as e:
+            return np.nan
+
+        return np.nan
 
     df['CalculatedAge'] = df.apply(lambda row: calculate_age(row['PatientBirthDate'], row['StudyDate']), axis=1)
 
