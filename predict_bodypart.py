@@ -52,8 +52,7 @@ def read_dicom_img(path: str, voi_lut: bool = True, fix_monochrome: bool = True,
         # This file has no image
         pass
     except Exception as e:
-        # print(f'Error reading DICOM file: {path}. {e}')
-        print(dicom.pixel_array)
+        print(f'Error reading DICOM file: {path}. {e}')
 
     return None
 
