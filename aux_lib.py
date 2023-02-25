@@ -1,4 +1,4 @@
-from multiprocessing import Pool
+#from multiprocessing import Pool
 import pydicom
 from tqdm import tqdm
 import pandas as pd
@@ -48,12 +48,18 @@ def dcmtag2df(folder: str, list_of_tags: list) -> DataFrame:
 
     args = zip(filelist, [list_of_tags] * len(filelist))
 
-    pool = Pool()  # os.cpu_count() - 1)
+    #pool = Pool()  # os.cpu_count() - 1)
 
     print("Reading DICOM files. Multiprocessing using: ", pool._processes, "cores")
     sleep(0.5)
 
-    table = pool.starmap(read_dicom, args)
+    table = []
+    for arg in args:
+        result = read_dicom(arg)
+        table.append(result)
+
+    #table = pool.starmap(read_dicom, args)
+
     table = [item for item in table if item != []]
 
     list_of_tags.insert(0, "Filename")
